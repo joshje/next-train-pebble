@@ -4,40 +4,57 @@ var digits = function(number) {
   return ("0" + number).slice(-2);
 };
 
-var nextTick = function(trains, callback) {
+var nextTick = function(dates, callback) {
   console.log('countdown tick');
   if (! visible) return;
   
   var now = new Date();
-  var times = [];
+  var relTimes = [];
   
-  for (var i = 0, len = trains.length; i < len; i++) {
-    var diff = trains[i].date - now;
-    if (diff > 0) {
+  dates.forEach(function(date) {
+    var diff = date - now;
+    if (diff < 0) {
+      relTimes.push('now');
+    } else {
       var hours = Math.floor(diff / 3600000);
       var mins = Math.floor(((diff % 86400000) % 3600000) / 60000);
 
+      var relTime;
       if (hours) {
-        times.push(digits(hours) + ':' + digits(mins));
+        relTime = digits(hours) + ':' + digits(mins);
+      } else if (mins === 0) {
+        relTime = 'now';
       } else {
-        times.push(mins);
+        relTime = mins;
       }
+      
+      relTimes.push(relTime);
     }
-  }
+  });
   
-  callback(times);
+  
+  var refreshTime = dates[0] - now;
+  
+  if (refreshTime < 0) {
+    console.log('first date expired');
+    return callback(relTimes, true);
+  }
 
-  var millis = Math.round((((trains[0].date - now) % 86400000) % 3600000) % 60000);
+  callback(relTimes);
+
+  var millis = Math.round(((refreshTime % 86400000) % 3600000) % 60000);
+  
+  console.log('next tick in ' + millis);
 
   setTimeout(function() {
-    nextTick(trains, callback);
+    nextTick(dates, callback);
   }, millis);
 };
 
-var start = function(trains, callback) {
+var start = function(dates, callback) {
   console.log('countdown start');
   visible = true;
-  nextTick(trains, callback);
+  nextTick(dates, callback);
 };
 
 var stop = function() {

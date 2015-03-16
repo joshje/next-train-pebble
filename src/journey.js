@@ -1,3 +1,4 @@
+var Vector2 = require('vector2');
 var UI = require('ui');
 var ajax = require('ajax');
 var countdown = require('countdown');
@@ -10,38 +11,81 @@ var init = function(options) {
 };
 
 var renderJourney = function(journey) {
-  console.log(JSON.stringify(journey));
-  var journeyCard = new UI.Card({
-    title: journey.from.text + ' to ' + journey.to.text,
-    body: 'Loading train times...'
+  console.log('render journey');
+  
+  var journeyWindow = new UI.Window();
+  var journeyFrom = new UI.Text({
+    text: journey.from.text,
+    color: 'white',
+    font: 'gothic-18-bold',
+    position: new Vector2(6, 0),
+    size: new Vector2(132, 24)
   });
-  journeyCard.show();
+  
+  var journeyTo = new UI.Text({
+    text: 'to ' + journey.to.text,
+    color: 'white',
+    font: 'gothic-14',
+    position: new Vector2(6, 20),
+    size: new Vector2(132, 18)
+  });
+  
+  var journeyTextRect = new UI.Rect({
+    backgroundColor: 'white',
+    position: new Vector2(0, 42),
+    size: new Vector2(144, 126)
+  });
+  
+  var journeyText = new UI.Text({
+    text: 'Loading train times...',
+    font: 'gothic-28',
+    color: 'black',
+    position: new Vector2(6, 56),
+    size: new Vector2(132, 100)
+  });
+  
+  journeyWindow.add(journeyFrom);
+  journeyWindow.add(journeyTo);
+  journeyWindow.add(journeyTextRect);
+  journeyWindow.add(journeyText);
+  
+  journeyWindow.show();
 
   var trainsUrl = serverDomain + '/api/trains?from=' + journey.from.code + '&to=' + journey.to.code;
   console.log('Fetching trains: ' + trainsUrl);
   
-  journeyCard.on('hide', function() {
+  journeyWindow.on('hide', function() {
     countdown.stop();
   });
-
-  ajax({
-    url: trainsUrl,
-      type: 'json'
+  
+  var fetchTrains = function() {
+    ajax({
+      url: trainsUrl,
+      type: 'json',
+      cache: false
     }, function(data) {
       console.log(JSON.stringify(data));
       var trains = data.trains;
       if (trains.length === 0) {
-        journeyCard.body('No trains found for this journey');
+        journeyText.text('No trains found');
       }
-      timer = countdown.start(trains, function(times) {
-        journeyCard.body('Next trains in ' + times.join(', ') + ' mins');
+      var trainDates = trains.map(function(train) {
+        return train.date;
+      });
+      timer = countdown.start(trainDates, function(times, refetch) {
+        journeyText.text("Next trains:\n" + times.join(', ') + ' mins');
+        if (refetch) {
+          setTimeout(fetchTrains, 5000);
+        }
       });
       
     }, function(error) {
-      console.log('Failed to fetch trains: ' + JSON.stringify(error));
-      journeyCard.body('Failed to get train times.');
-    }
-  );
+      console.log("Failed to fetch trains:\n" + JSON.stringify(error));
+      journeyText.text('Failed to get train times');
+    });
+  };
+
+  fetchTrains();
 };
 
 module.exports = {
