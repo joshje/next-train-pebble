@@ -1,10 +1,14 @@
 var UI = require('ui');
 var Settings = require('settings');
-var ajax = require('ajax');
+var journeyView = require('journey');
 
 var journeys;
 
-var serverDomain = 'http://localhost:3000';
+var serverDomain = 'http://next-train.joshemerson.co.uk';
+
+journeyView.init({
+  serverDomain: serverDomain
+});
 
 var firstRun = new UI.Card({
   title: 'Next Train',
@@ -44,30 +48,9 @@ var renderMenu = function() {
   }
 };
 
-var renderJourney = function(journey) {
-  console.log(JSON.stringify(journey));
-  var journeyCard = new UI.Card({
-    title: journey.from.text + ' to ' + journey.to.text,
-    body: 'Loading train times...'
-  });
-  journeyCard.show();
-
-  var trainsUrl = serverDomain + '/api/trains?from=' + journey.from.code + '&to=' + journey.to.code;
-
-  ajax({
-    url: trainsUrl,
-      type: 'json'
-    }, function(data) {
-      console.log(JSON.stringify(data.trains));
-    }, function(error) {
-      console.log('Failed to fetch trains: ' + error);
-    }
-  );
-};
 
 journeysMenu.on('select', function(e) {
-  var journey = journeys[e.itemIndex];
-  renderJourney(journey);
+  journeyView.render(journeys[e.itemIndex]);
 });
 
 Settings.config({
