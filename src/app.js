@@ -33,7 +33,7 @@ var journeysMenuItems = function(journeys) {
 
 var renderMenu = function() {
   journeys = Settings.option('journeys');
-  
+
   if (! journeys || journeys.length === 0) {
     firstRun.show();
     journeysMenu.hide();
@@ -51,15 +51,15 @@ var renderJourney = function(journey) {
     body: 'Loading train times...'
   });
   journeyCard.show();
-  
+
   var trainsUrl = serverDomain + '/api/trains?from=' + journey.from.code + '&to=' + journey.to.code;
-  
+
   ajax({
     url: trainsUrl,
       type: 'json'
-    }, function(data, status, request) {
+    }, function(data) {
       console.log(JSON.stringify(data.trains));
-    }, function(error, status, request) {
+    }, function(error) {
       console.log('Failed to fetch trains: ' + error);
     }
   );
@@ -72,9 +72,9 @@ journeysMenu.on('select', function(e) {
 
 Settings.config({
   url: serverDomain + '/pebble/settings'
-}, function(e) {
+}, function() {
   console.log('opening configurable');
-}, function(e) {
+}, function() {
   console.log('closed configurable');
   renderMenu();
 });
