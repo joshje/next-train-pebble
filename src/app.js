@@ -48,7 +48,6 @@ var renderMenu = function() {
   }
 };
 
-
 journeysMenu.on('select', function(e) {
   journeyView.render(journeys[e.itemIndex]);
 });
